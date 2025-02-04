@@ -1,0 +1,6 @@
+.vs
+.git
+DiscordBot/bin
+DiscordBot/obj
+DiscordBot/ffmpeg.exe
+DiscordBot/appsettings.json
