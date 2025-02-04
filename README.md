@@ -1,7 +1,7 @@
-### Setup
-<hr/>
+# Setup
 
 This bot allows you to play some music from youtube in your discord servers.
+
 To use this bot you should firstly create 2 following files:
 
 1. DiscordBot/appsettings.json **with following contents**:
@@ -30,8 +30,7 @@ To use this bot you should firstly create 2 following files:
 ```
 2. DiscordBot/ffmpeg.exe to encode youtube audio stream to PCM format
 
-### Commands
-<hr/>
+# Commands
 
 !play [search_query\url] 
   
