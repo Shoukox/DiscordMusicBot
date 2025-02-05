@@ -20,6 +20,7 @@ namespace DiscordBot.Services
 {
     public class YoutubeService(ILogger<YoutubeService> logger)
     {
+        public static bool CookiesExists = System.IO.File.Exists("cookies.txt");
         public const string YtDlpFileName = "yt-dlp";
         public const string FfmpegFileName = "ffmpeg";
 
@@ -29,11 +30,13 @@ namespace DiscordBot.Services
         public string GetCommandArgumentsForYTDLP(string query, bool isUri)
         {
             if (!isUri) query = $"ytsearch:\"{query}\"";
+            if (CookiesExists) query = $"--cookies cookies.txt {query}";
             return $"-f bestaudio --quiet -o - {query}";
         }
         public string GetCommandArgumentsForYTDLP_SongTitle(string query, bool isUri)
         {
             if (!isUri) query = $"ytsearch:\"{query}\"";
+            if (CookiesExists) query = $"--cookies cookies.txt {query}";
             return $"--print title {query}";
         }
         public string GetCommandArgumentsForFFMPEG = $"-hide_banner -loglevel panic -i pipe:0 -ac 2 -f s16le -ar 48000 pipe:1";
