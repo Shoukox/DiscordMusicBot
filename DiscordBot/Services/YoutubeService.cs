@@ -21,8 +21,8 @@ namespace DiscordBot.Services
     public class YoutubeService(ILogger<YoutubeService> logger)
     {
         public static bool CookiesExists = System.IO.File.Exists("cookies.txt");
-        public const string YtDlpFileName = "yt-dlp";
-        public const string FfmpegFileName = "ffmpeg";
+        public const string YtDlpFileName = "./yt-dlp";
+        public const string FfmpegFileName = "./ffmpeg";
 
         private string? _searchQuery { get; set; }
         private bool _isUri { get; set; }

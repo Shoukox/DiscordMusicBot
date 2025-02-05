@@ -200,7 +200,7 @@ namespace DiscordBot.Services
                 while (queue.Count > 0)
                 {
                     PlayableSong song;
-                    if (queue.TryDequeue(out song))
+                    if (!queue.TryDequeue(out song))
                     {
                         throw new Exception("Concurrent queue threw an exception while dequeueing");
                     }

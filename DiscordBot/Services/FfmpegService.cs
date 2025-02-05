@@ -19,7 +19,7 @@ namespace DiscordBot.Services
 {
     public class FfmpegService(ILogger<FfmpegService> logger)
     {
-        public const string FfmpegFileName = "ffmpeg";
+        public const string FfmpegFileName = "./ffmpeg";
         public string GetCommandArgumentsForPCMStream(string path) =>
             $"-hide_banner -loglevel panic -i \"{path}\" -ac 2 -f s16le -ar 48000 pipe:1";
 
