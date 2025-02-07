@@ -1,6 +1,6 @@
 # Setup
 
-This bot allows you to play some music from youtube in your discord servers.
+This bot allows you to play some music from youtube (and [other services](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) lol) in your discord servers.
 
 To use this bot you should firstly create 2 following files:
 
