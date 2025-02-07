@@ -46,7 +46,7 @@ namespace DiscordBot.BotLogic.Commands
             if (shouldReturn) return;
 
             // Checks for bot
-            ConnectToVoiceChannelResult result = await Context.ConnectToServerIfNeeded(voiceService, guildUser);
+            ConnectToVoiceChannelResult result = await Context.ConnectToServerIfNeeded(voiceService, guildUser.VoiceChannel);
             if (result.Equals(ConnectToVoiceChannelResult.AlreadyInVC))
             {
                 await Context.Message.ReplyAsync("I'm already in a voice chat");
@@ -70,11 +70,11 @@ namespace DiscordBot.BotLogic.Commands
             if (shouldReturn) return;
 
             // Checks for bot
-            await Context.ConnectToServerIfNeeded(voiceService, guildUser);
+            await Context.ConnectToServerIfNeeded(voiceService, guildUser.VoiceChannel);
             IAudioClient audioClient = voiceService.GetAudioClient(Context.Guild.Id)!;
 
             PlayableSong noise = new PlayableSong();
-            noise.AudioStream = voiceService.GetNoiseStream(audioClient, 30);
+            noise.AudioStream = voiceService.GetNoiseStream(30);
             noise.SongTitle = "noise";
             voiceService.EnqueueIntoSongsQueue(Context.Guild.Id, noise);
 
@@ -115,7 +115,7 @@ namespace DiscordBot.BotLogic.Commands
             }
 
             // Checks for bot
-            await Context.ConnectToServerIfNeeded(voiceService, guildUser);
+            await Context.ConnectToServerIfNeeded(voiceService, guildUser.VoiceChannel);
             IAudioClient? audioClient = voiceService.GetAudioClient(Context.Guild.Id);
 
             PlayableSong playableSong = new PlayableSong();
@@ -150,7 +150,7 @@ namespace DiscordBot.BotLogic.Commands
             if (shouldReturn) return;
 
             // Checks for bot
-            await Context.ConnectToServerIfNeeded(voiceService, guildUser);
+            await Context.ConnectToServerIfNeeded(voiceService, guildUser.VoiceChannel);
             IAudioClient? audioClient = voiceService.GetAudioClient(Context.Guild.Id);
 
             var audioStream = voiceService.GetAudioOutStream(Context.Guild.Id);
@@ -173,7 +173,7 @@ namespace DiscordBot.BotLogic.Commands
             if (shouldReturn) return;
 
             // Checks for bot
-            await Context.ConnectToServerIfNeeded(voiceService, guildUser);
+            await Context.ConnectToServerIfNeeded(voiceService, guildUser.VoiceChannel);
             IAudioClient? audioClient = voiceService.GetAudioClient(Context.Guild.Id);
             voiceService.ResumeQueue(Context.Guild.Id);
 
@@ -194,7 +194,7 @@ namespace DiscordBot.BotLogic.Commands
             if (shouldReturn) return;
 
             // Checks for bot
-            await Context.ConnectToServerIfNeeded(voiceService, guildUser);
+            await Context.ConnectToServerIfNeeded(voiceService, guildUser.VoiceChannel);
             IAudioClient? audioClient = voiceService.GetAudioClient(Context.Guild.Id);
             voiceService.SkipSongInQueue(Context.Guild.Id);
             await ReplyAsync($"***[Queue: {voiceService.GetQueueLength(Context.Guild.Id)}]*** **Skipped!**");
@@ -213,7 +213,7 @@ namespace DiscordBot.BotLogic.Commands
             if (shouldReturn) return;
 
             // Checks for bot
-            await Context.ConnectToServerIfNeeded(voiceService, guildUser);
+            await Context.ConnectToServerIfNeeded(voiceService, guildUser.VoiceChannel);
             IAudioClient? audioClient = voiceService.GetAudioClient(Context.Guild.Id);
 
             PlayableSong? playableSong = voiceService.GetSoundStreamFromYoutube(text!);
@@ -233,7 +233,7 @@ namespace DiscordBot.BotLogic.Commands
                 await voiceService.PlayQueue(Context.Guild.Id, async (song) =>
                 {
                     await ReplyAsync($"***[Queue: {voiceService.GetQueueLength(Context.Guild.Id)}]*** **{song.SongTitle}** is playing now!");
-                });
+                }, Context);
             }
         }
     }

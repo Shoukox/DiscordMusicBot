@@ -25,16 +25,16 @@ namespace DiscordBot.Services
             return botGuildUser;
         }
 
-        public static async Task<ConnectToVoiceChannelResult> ConnectToServerIfNeeded(this SocketCommandContext context, VoiceService voiceService, IGuildUser guildUser)
+        public static async Task<ConnectToVoiceChannelResult> ConnectToServerIfNeeded(this SocketCommandContext context, VoiceService voiceService, IVoiceChannel voiceChannel)
         {
             var semaphoreSlim = BotSynchronization.Instance.GetSemaphoreSlim(context.Guild.Id);
             semaphoreSlim.Wait();
             ConnectToVoiceChannelResult result;
             IAudioClient? audioClient;
-            bool isBotAlreadyInThisVC = await context.CheckIsBotAlreadyInVC(guildUser!.VoiceChannel);
+            bool isBotAlreadyInThisVC = await context.CheckIsBotAlreadyInVC(voiceChannel);
             if (!isBotAlreadyInThisVC)
             {
-                audioClient = await guildUser.VoiceChannel.ConnectAsync();
+                audioClient = await voiceChannel.ConnectAsync();
                 voiceService.SetAudioClient(context.Guild.Id, audioClient);
 
                 result = ConnectToVoiceChannelResult.Connected;
@@ -44,8 +44,8 @@ namespace DiscordBot.Services
                 audioClient = voiceService.GetAudioClient(context.Guild.Id);
                 if (audioClient == null)
                 {
-                    await guildUser.VoiceChannel.DisconnectAsync();
-                    audioClient = await guildUser.VoiceChannel.ConnectAsync();
+                    await voiceChannel.DisconnectAsync();
+                    audioClient = await voiceChannel.ConnectAsync();
                     voiceService.SetAudioClient(context.Guild.Id, audioClient);
                     result = ConnectToVoiceChannelResult.ReconnectedFromAnotherVC;
                 }

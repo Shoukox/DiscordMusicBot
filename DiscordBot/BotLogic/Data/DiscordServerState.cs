@@ -22,6 +22,7 @@ namespace DiscordBot.BotLogic.Data
 
         public bool IsPaused { get; set; }
 
-        public bool ShoukdSkipCurrentSong { get; set; }
+        public bool ShouldSkipCurrentSong { get; set; }
+
     }
 }

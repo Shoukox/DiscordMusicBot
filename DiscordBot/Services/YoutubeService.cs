@@ -18,7 +18,7 @@ using CliWrap;
 
 namespace DiscordBot.Services
 {
-    public class YoutubeService(ILogger<YoutubeService> logger)
+    public class YoutubeService(FfmpegService ffmpegService, ILogger<YoutubeService> logger)
     {
         public static bool CookiesExists = System.IO.File.Exists("cookies.txt");
         public const string YtDlpFileName = "yt-dlp";
@@ -56,35 +56,47 @@ namespace DiscordBot.Services
 
         private Stream GetStandardOutputForFfmpegConvertation()
         {
-            Process ytDlp = new Process();
-            ytDlp.StartInfo.FileName = YtDlpFileName;
-            ytDlp.StartInfo.Arguments = GetCommandArgumentsForYTDLP(_searchQuery!, _isUri);
-            ytDlp.StartInfo.UseShellExecute = false;
+            Process ytDlp = GetCommandProcess(GetCommandArgumentsForYTDLP(_searchQuery!, _isUri));
             ytDlp.StartInfo.RedirectStandardOutput = true;
             ytDlp.Start();
             StreamReader ytDlpStandardOutput = ytDlp.StandardOutput;
 
-            Process ffmpeg = new Process();
-            ffmpeg.StartInfo.FileName = FfmpegFileName;
-            ffmpeg.StartInfo.Arguments = GetCommandArgumentsForFFMPEG;
-            ffmpeg.StartInfo.UseShellExecute = false;
+            Process ffmpeg = ffmpegService.GetCommandProcess(GetCommandArgumentsForFFMPEG);
             ffmpeg.StartInfo.RedirectStandardInput = true;
             ffmpeg.StartInfo.RedirectStandardOutput = true;
             ffmpeg.Start();
 
             _ = Task.Run(async() =>
             {
-                byte[] buffer = new byte[3840];
-                int bytesRead;
-                while ((bytesRead = await ytDlpStandardOutput.BaseStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                try
                 {
-                    await ffmpeg.StandardInput.BaseStream.WriteAsync(buffer, 0, bytesRead);
+                    byte[] buffer = new byte[3840];
+                    int bytesRead;
+                    while ((bytesRead = await ytDlpStandardOutput.BaseStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                    {
+                        await ffmpeg.StandardInput.BaseStream.WriteAsync(buffer, 0, bytesRead);
+                    }
                 }
-                ffmpeg.StandardInput.Close();
+                catch(Exception e)
+                {
+                    logger.LogError(e, e.Message);
+                }
+                //ffmpeg.StandardInput.Close();
+
+                ytDlp.Dispose();
+                ffmpeg.Dispose();
             });
             return ffmpeg.StandardOutput.BaseStream;
         }
 
+        public Process GetCommandProcess(string args)
+        {
+            Process ytDlp = new Process();
+            ytDlp.StartInfo.FileName = YtDlpFileName;
+            ytDlp.StartInfo.Arguments = args;
+            ytDlp.StartInfo.UseShellExecute = false;
+            return ytDlp;
+        }
 
         private string GetSongTitleFromYoutube()
         {

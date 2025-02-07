@@ -23,28 +23,22 @@ namespace DiscordBot.Services
         public string GetCommandArgumentsForPCMStream(string path) =>
             $"-hide_banner -loglevel panic -i \"{path}\" -ac 2 -y -f s16le -ar 48000 pipe:1";
 
-        private Process GetCommandProcess(string args)
+        public Process GetCommandProcess(string args)
         {
-            var process = Process.Start(new ProcessStartInfo
-            {
-                FileName = FfmpegFileName,
-                Arguments = args,
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-            });
-            if (process == null)
-            {
-                throw new Exception($"Failed to get {FfmpegFileName} process");
-            }
-            return process;
+            Process ffmpeg = new Process();
+            ffmpeg.StartInfo.FileName = FfmpegFileName;
+            ffmpeg.StartInfo.Arguments = args;
+            ffmpeg.StartInfo.UseShellExecute = false;
+            return ffmpeg;
         }
 
-        public Stream GetAudioStreamFromPath(string path)
+        public Process GetCommandProcessForPCMStream(string path)
         {
-            Process ytp = GetCommandProcess(GetCommandArgumentsForPCMStream(path));
-            var output = ytp.StandardOutput.BaseStream;
-            return output;
+            Process ffmpeg = new Process();
+            ffmpeg.StartInfo.FileName = FfmpegFileName;
+            ffmpeg.StartInfo.Arguments = GetCommandArgumentsForPCMStream(path);
+            ffmpeg.StartInfo.UseShellExecute = false;
+            return ffmpeg;
         }
-
     }
 }

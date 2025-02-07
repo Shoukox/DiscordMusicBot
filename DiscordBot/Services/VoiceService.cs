@@ -1,9 +1,12 @@
-﻿using Discord.Audio;
+﻿using Discord;
+using Discord.Audio;
 using Discord.Commands;
+using Discord.WebSocket;
 using DiscordBot.BotLogic.Data;
 using DiscordBot.Database;
 using DiscordBot.Database.Models;
 using DiscordBot.Services.Types;
+using FFmpeg.AutoGen;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
@@ -58,10 +61,6 @@ namespace DiscordBot.Services
         public void SetAudioClient(ulong guildId, IAudioClient audioClient)
         {
             DiscordServerState server = GetOrCreateDiscordServerStateByGuildId(guildId);
-            if (server.audioClient != null)
-            {
-                audioClient.Dispose();
-            }
             server.audioClient = audioClient;
         }
 
@@ -103,13 +102,13 @@ namespace DiscordBot.Services
         public bool GetShouldSkip(ulong guildId)
         {
             DiscordServerState server = GetOrCreateDiscordServerStateByGuildId(guildId);
-            return server.ShoukdSkipCurrentSong;
+            return server.ShouldSkipCurrentSong;
         }
         public void SetShouldSkip(ulong guildId, bool value)
         {
             DiscordServerState server = GetOrCreateDiscordServerStateByGuildId(guildId);
 
-            server.ShoukdSkipCurrentSong = value;
+            server.ShouldSkipCurrentSong = value;
         }
 
         public void EnqueueIntoSongsQueue(ulong guildId, PlayableSong sound)
@@ -143,7 +142,7 @@ namespace DiscordBot.Services
             soundNotFound = false;
             return Directory.GetFiles(songPath, "*.mp3")[0];
         }
-        public Stream GetNoiseStream(IAudioClient audioClient, int seconds)
+        public Stream GetNoiseStream(int seconds)
         {
             int sampleRate = 48000;     // Discord's sample rate
             int channels = 2;           // Stereo
@@ -164,10 +163,18 @@ namespace DiscordBot.Services
 
         public Stream GetSoundStreamFromMP3(string path)
         {
-            return ffmpegService.GetAudioStreamFromPath(path);
+            return GetAudioStreamFromPath(path);
         }
 
-        public async Task PlayQueue(ulong guildId, Func<PlayableSong, Task>? onSongPlay = null)
+        public Stream GetAudioStreamFromPath(string path)
+        {
+            Process ffmpeg = ffmpegService.GetCommandProcessForPCMStream(path);
+            ffmpeg.StartInfo.RedirectStandardOutput = true;
+            ffmpeg.Start();
+            return ffmpeg.StandardOutput.BaseStream;
+        }
+
+        public async Task PlayQueue(ulong guildId, Func<PlayableSong, Task>? onSongPlay = null, SocketCommandContext context = null)
         {
             SetIsPlayingSound(guildId, true);
             try
@@ -179,13 +186,15 @@ namespace DiscordBot.Services
                 ConcurrentQueue<PlayableSong> queue = GetSongsQueue(guildId);
                 while (queue.Count > 0)
                 {
-                    PlayableSong song;
-                    if (!queue.TryDequeue(out song))
-                    {
-                        throw new Exception("Concurrent queue threw an exception while dequeueing");
-                    }
+                    PlayableSong song = DequeueFromSongsQueue(guildId);
                     using Stream stream = song.AudioStream!;
                     using AudioOutStream audioOutStream = audioClient.CreatePCMStream(AudioApplication.Mixed);
+
+                    audioClient.StreamDestroyed += (a) =>
+                    {
+                        logger.LogInformation("Stream destroyed");
+                        return Task.CompletedTask;
+                    };
 
                     SetAudioOutStream(guildId, audioOutStream);
 
@@ -203,19 +212,27 @@ namespace DiscordBot.Services
                         if (GetShouldSkip(guildId))
                         {
                             SetShouldSkip(guildId, false);
+
+                            // idk why does exactly this length work and song will be successfully skipped without random artifacts
+                            // I have also checked all the exponents up to 19. They dont work. It seems to work with 20 and higher 
+                            int magicLength = (int)Math.Pow(2, 20);
+                            byte[] arr = new byte[magicLength];
+                            await audioOutStream.WriteAsync(arr);
                             break;
                         }
+
                         await audioOutStream.WriteAsync(audioBuffer, 0, bytesRead);
                     }
-                    await audioOutStream.FlushAsync();
                 }
             }
             catch (Exception ex)
             {
                 logger.LogError(ex.Message);
+                await context.Message.ReplyAsync($"Internal error: {ex.Message}");
             }
             SetIsPlayingSound(guildId, false);
         }
+
         public void PauseQueue(ulong guildId)
         {
             bool isPaused = GetIsPaused(guildId);
