@@ -16,7 +16,7 @@ namespace DiscordBot.BotLogic.Data
             _states.GetOrAdd(guildId, _ => new DiscordServerState());
 
         public bool TryGetState(ulong guildId, out DiscordServerState state) =>
-            _states.TryGetValue(guildId, out state);
+            _states.TryGetValue(guildId, out state!);
 
         public void RemoveState(ulong guildId) =>
             _states.TryRemove(guildId, out _);

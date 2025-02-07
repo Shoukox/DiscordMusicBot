@@ -117,28 +117,15 @@ namespace DiscordBot.Services
             ConcurrentQueue<PlayableSong> songs = GetSongsQueue(guildId);
             songs.Enqueue(sound);
         }
-        public void InsertIntoSongsQueue(ulong guildId, PlayableSong sound, int index)
-        {
-            DiscordServerState server = GetOrCreateDiscordServerStateByGuildId(guildId);
-            ConcurrentQueue<PlayableSong>? songs = server.SongQueue;
-
-            var list = songs!.ToList();
-            list.Insert(index, sound);
-
-            var newQueue = new ConcurrentQueue<PlayableSong>();
-            foreach (PlayableSong stream in list)
-            {
-                newQueue.Enqueue(stream);
-            }
-            server.SongQueue = newQueue;
-
-        }
-        public PlayableSong DequeueIntoSongsQueue(ulong guildId)
+        public PlayableSong DequeueFromSongsQueue(ulong guildId)
         {
             ConcurrentQueue<PlayableSong> songs = GetSongsQueue(guildId);
 
             PlayableSong result;
-            songs.TryDequeue(out result);
+            if (!songs.TryDequeue(out result))
+            {
+                throw new NullReferenceException();
+            }
 
             return result;
         }

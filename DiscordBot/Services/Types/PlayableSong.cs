@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace DiscordBot.Services.Types
 {
-    public struct PlayableSong
+    public class PlayableSong
     {
         public Stream? AudioStream;
-        public string SongTitle;
+        public string? SongTitle;
     }
 }

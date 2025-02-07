@@ -25,7 +25,7 @@ using static System.Net.Mime.MediaTypeNames;
 
 namespace DiscordBot.BotLogic.Commands
 {
-    public class VoiceModule(VoiceService voiceService, BotContext dbContext, ILogger<VoiceModule> logger) : ModuleBase<SocketCommandContext>
+    public class VoiceModule(VoiceService voiceService, ILogger<VoiceModule> logger) : ModuleBase<SocketCommandContext>
     {
 
         [Command("join", RunMode = RunMode.Async)]
@@ -217,13 +217,13 @@ namespace DiscordBot.BotLogic.Commands
             IAudioClient? audioClient = voiceService.GetAudioClient(Context.Guild.Id);
 
             PlayableSong? playableSong = voiceService.GetSoundStreamFromYoutube(text!);
-            if (playableSong!.Value.AudioStream == null)
+            if (playableSong!.AudioStream == null)
             {
                 throw new Exception("Internal error. Failed to get a video stream");
             }
-            voiceService.EnqueueIntoSongsQueue(Context.Guild.Id, playableSong.Value);
+            voiceService.EnqueueIntoSongsQueue(Context.Guild.Id, playableSong);
             int queueCount = voiceService.GetQueueLength(Context.Guild.Id);
-            var songName = playableSong.Value.SongTitle;
+            var songName = playableSong.SongTitle;
             var voiceChannelLink = Context.GetVoiceChannelLink(guildUser!.VoiceChannel.Id);
             await ReplyAsync($"***[Queue: {queueCount}]*** **{songName}** has been queued in voice channel {voiceChannelLink}");
 
