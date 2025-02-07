@@ -1,5 +1,6 @@
 .vs
 .git
+.idea
 DiscordBot/bin
 DiscordBot/obj
 DiscordBot/ffmpeg.exe
